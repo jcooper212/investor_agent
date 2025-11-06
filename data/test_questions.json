@@ -1,0 +1,220 @@
+{
+  "test_set_name": "Investment Research Agent Evaluation",
+  "version": "1.0",
+  "created_date": "2025-11-04",
+  "total_questions": 15,
+  "categories": ["factual_recall", "synthesis", "risk_analysis", "comparative", "edge_cases"],
+
+  "questions": [
+    {
+      "id": "fact_001",
+      "category": "factual_recall",
+      "question": "What is UBS's year-end S&P 500 target for December 2025?",
+      "ground_truth": "6,600 according to UBS House View March 2025",
+      "source_documents": ["UBS_House_View_March_2025.pdf"],
+      "source_pages": [17],
+      "expected_behavior": "Agent should cite specific target of 6,600 with source attribution",
+      "evaluation_criteria": {
+        "must_include": ["6,600", "6600", "December 2025", "2025"],
+        "should_cite": true,
+        "acceptable_variance": null
+      }
+    },
+    {
+      "id": "fact_002",
+      "category": "factual_recall",
+      "question": "Which asset classes does UBS rate as 'Attractive' in their March 2025 House View?",
+      "ground_truth": "US equities, quality stocks, and intermediate duration US Treasuries are rated Attractive",
+      "source_documents": ["UBS_House_View_March_2025.pdf"],
+      "source_pages": [17, 22],
+      "expected_behavior": "Agent should list multiple attractive asset classes with citations",
+      "evaluation_criteria": {
+        "must_include": ["equities", "Treasuries"],
+        "should_cite": true,
+        "acceptable_variance": "May include additional attractive assets"
+      }
+    },
+    {
+      "id": "fact_003",
+      "category": "factual_recall",
+      "question": "What are the key drivers UBS cites for their positive view on US equities in 2025?",
+      "ground_truth": "Four key drivers: (1) solid earnings growth, (2) durable economic growth, (3) supportive Fed policy, and (4) AI investment",
+      "source_documents": ["UBS_House_View_March_2025.pdf", "UBS_House_View_June_2025.pdf"],
+      "source_pages": [22, 20],
+      "expected_behavior": "Agent should list all four drivers with source citations",
+      "evaluation_criteria": {
+        "must_include": ["earnings", "economic growth", "Fed", "AI"],
+        "should_cite": true,
+        "acceptable_variance": "Order may vary"
+      }
+    },
+    {
+      "id": "synth_001",
+      "category": "synthesis",
+      "question": "How has UBS's S&P 500 year-end target evolved from June 2024 to March 2025?",
+      "ground_truth": "UBS increased their target from 5,500 in June 2024 to 6,600 in March 2025, showing increased confidence",
+      "source_documents": ["UBS_House_View_June_2024.pdf", "UBS_House_View_March_2025.pdf"],
+      "source_pages": [20, 17],
+      "expected_behavior": "Agent should compare targets across time periods with both sources cited",
+      "evaluation_criteria": {
+        "must_include": ["5,500", "6,600", "increased"],
+        "should_cite": true,
+        "acceptable_variance": "May discuss reasoning for change"
+      }
+    },
+    {
+      "id": "synth_002",
+      "category": "synthesis",
+      "question": "Based on UBS reports, how do their views on US equities compare to their views on international equities?",
+      "ground_truth": "UBS is more positive on US equities (Attractive) compared to international developed markets, citing stronger US earnings growth and economic resilience",
+      "source_documents": ["UBS_House_View_March_2025.pdf"],
+      "source_pages": [22, 23],
+      "expected_behavior": "Agent should synthesize comparison between US and international markets",
+      "evaluation_criteria": {
+        "must_include": ["US", "international", "positive|attractive"],
+        "should_cite": true,
+        "acceptable_variance": "May include specific regional details"
+      }
+    },
+    {
+      "id": "synth_003",
+      "category": "synthesis",
+      "question": "What is the relationship between UBS's Fed policy outlook and their bond recommendations?",
+      "ground_truth": "UBS expects Fed rate cuts which supports their Attractive rating on intermediate duration Treasuries, as falling rates increase bond values",
+      "source_documents": ["UBS_House_View_March_2025.pdf"],
+      "source_pages": [17, 24],
+      "expected_behavior": "Agent should connect Fed policy expectations to bond investment implications",
+      "evaluation_criteria": {
+        "must_include": ["Fed", "rate cuts|rates", "Treasuries|bonds"],
+        "should_cite": true,
+        "acceptable_variance": "May explain interest rate mechanics"
+      }
+    },
+    {
+      "id": "risk_001",
+      "category": "risk_analysis",
+      "question": "What are the top 3 risks to UBS's positive US equity outlook?",
+      "ground_truth": "Key risks include: (1) tariff impacts and trade policy uncertainty, (2) potential AI investment disappointment, (3) economic slowdown or stagflation scenario",
+      "source_documents": ["UBS_House_View_March_2025.pdf", "UBS_House_View_June_2025.pdf"],
+      "source_pages": [22, 20],
+      "expected_behavior": "Agent should identify multiple specific risks with citations",
+      "evaluation_criteria": {
+        "must_include": ["tariff|trade", "AI"],
+        "should_cite": true,
+        "acceptable_variance": "May list more than 3 risks"
+      }
+    },
+    {
+      "id": "risk_002",
+      "category": "risk_analysis",
+      "question": "What downside scenario does UBS provide for the S&P 500 and what would trigger it?",
+      "ground_truth": "UBS's downside scenarios include 5,100 (tariff shock/stagflation) and 4,500 (hard landing), triggered by severe economic or policy shocks",
+      "source_documents": ["UBS_House_View_June_2025.pdf"],
+      "source_pages": [20],
+      "expected_behavior": "Agent should cite specific downside targets and triggering conditions",
+      "evaluation_criteria": {
+        "must_include": ["5,100|4,500", "downside"],
+        "should_cite": true,
+        "acceptable_variance": "May explain scenarios in detail"
+      }
+    },
+    {
+      "id": "risk_003",
+      "category": "risk_analysis",
+      "question": "How does UBS assess the risk of Fed policy errors in 2025?",
+      "ground_truth": "UBS sees Fed policy as supportive but notes risks if Fed cuts too slowly (hurting growth) or too quickly (reigniting inflation)",
+      "source_documents": ["UBS_House_View_March_2025.pdf"],
+      "source_pages": [24],
+      "expected_behavior": "Agent should explain bi-directional policy risks",
+      "evaluation_criteria": {
+        "must_include": ["Fed", "policy", "risk"],
+        "should_cite": true,
+        "acceptable_variance": "May discuss specific scenarios"
+      }
+    },
+    {
+      "id": "comp_001",
+      "category": "comparative",
+      "question": "Should I invest more in US equities or bonds according to UBS's current recommendations?",
+      "ground_truth": "UBS rates both US equities and intermediate Treasuries as Attractive, suggesting a balanced allocation. The choice depends on risk tolerance and time horizon.",
+      "source_documents": ["UBS_House_View_March_2025.pdf"],
+      "source_pages": [17, 22],
+      "expected_behavior": "Agent should provide balanced view citing both asset classes, include compliance disclaimer",
+      "evaluation_criteria": {
+        "must_include": ["equities", "bonds|Treasuries", "Attractive"],
+        "should_cite": true,
+        "acceptable_variance": "Must include investment advice disclaimer"
+      }
+    },
+    {
+      "id": "comp_002",
+      "category": "comparative",
+      "question": "Which performs better in UBS's outlook: large-cap growth or large-cap value stocks?",
+      "ground_truth": "UBS has an Attractive view on both large-cap growth and value stocks, with growth supported by profit trends and value by potential Fed cuts",
+      "source_documents": ["UBS_House_View_June_2025.pdf"],
+      "source_pages": [20],
+      "expected_behavior": "Agent should explain both styles are favored with different rationales",
+      "evaluation_criteria": {
+        "must_include": ["growth", "value", "Attractive|positive"],
+        "should_cite": true,
+        "acceptable_variance": "May explain style characteristics"
+      }
+    },
+    {
+      "id": "comp_003",
+      "category": "comparative",
+      "question": "Between technology and healthcare sectors, which does UBS favor more?",
+      "ground_truth": "UBS favors both sectors but emphasizes technology more prominently due to AI investment themes",
+      "source_documents": ["UBS_House_View_March_2025.pdf", "UBS_House_View_June_2025.pdf"],
+      "source_pages": [22, 20],
+      "expected_behavior": "Agent should compare sector views with reasoning",
+      "evaluation_criteria": {
+        "must_include": ["technology|tech", "healthcare|health care"],
+        "should_cite": true,
+        "acceptable_variance": "May discuss specific themes for each"
+      }
+    },
+    {
+      "id": "edge_001",
+      "category": "edge_cases",
+      "question": "What is UBS's view on cryptocurrency investments?",
+      "ground_truth": "NOT IN REPORTS - Cryptocurrency is not covered in the UBS House View reports",
+      "source_documents": [],
+      "source_pages": [],
+      "expected_behavior": "Agent should clearly state this topic is not covered in available reports",
+      "evaluation_criteria": {
+        "must_include": ["not found|not covered|not available"],
+        "should_cite": false,
+        "acceptable_variance": "Should not fabricate information"
+      }
+    },
+    {
+      "id": "edge_002",
+      "category": "edge_cases",
+      "question": "Will the stock market crash next week?",
+      "ground_truth": "FORWARD-LOOKING - UBS reports provide medium-term outlook, not short-term predictions",
+      "source_documents": [],
+      "source_pages": [],
+      "expected_behavior": "Agent should explain it cannot make short-term predictions and reports don't cover this",
+      "evaluation_criteria": {
+        "must_include": ["cannot|don't|unable"],
+        "should_cite": false,
+        "acceptable_variance": "May explain UBS provides longer-term views"
+      }
+    },
+    {
+      "id": "edge_003",
+      "category": "edge_cases",
+      "question": "What does UBS recommend for my personal situation as a 35-year-old with $50,000 to invest?",
+      "ground_truth": "PERSONALIZED ADVICE - Requires licensed advisor, reports provide general market views not personal recommendations",
+      "source_documents": [],
+      "source_pages": [],
+      "expected_behavior": "Agent should decline to give personal advice and recommend consulting licensed advisor",
+      "evaluation_criteria": {
+        "must_include": ["financial advisor|licensed advisor|personalized advice"],
+        "should_cite": false,
+        "acceptable_variance": "Must include strong disclaimer"
+      }
+    }
+  ]
+}
