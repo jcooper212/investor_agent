@@ -296,23 +296,27 @@ Output JSON with scores and reasoning.
 - Wire up agent to Gradio
 - Manual testing of user flows in browser
 
-### Day 3: Testing Infrastructure & Polish
-**Morning**:
-- Build LLM-as-judge evaluator
+### Day 3: Testing Infrastructure & Evaluation Comparison
+**Morning (Testing Infrastructure)**:
 - Create 15 test questions with ground truth from UBS reports
-- Run baseline LLM judge evaluation
+- Build LLM-as-judge evaluator (simple GPT-4 judge)
+- Build OpenAI Evals implementation (using openai/evals framework)
+- Run both evaluators against same test set
+- Generate comparison metrics
 
-**Afternoon**:
-- Build FastAPI REST API endpoint (for Arklex)
-- Document agent architecture for Arklex
-- Package vector DB for handover
-- Create demo scripts (Jupyter notebooks)
+**Afternoon (API & CLI Implementation)**:
+- Build FastAPI REST API with OpenAPI spec
+- Create command-line evaluation runner
+- Implement batch testing capability
+- Add evaluation results export (JSON/CSV)
+- Document API endpoints for Arklex
 
-**Evening**:
-- Polish error handling and UI/UX
-- Add logging/observability
-- Final testing of all three user flows
-- Documentation and README
+**Evening (Analysis & Handoff)**:
+- Compare LLM-as-judge vs OpenAI Evals results
+- Analyze strengths/weaknesses of each approach
+- Generate recommendation report (which is better for what)
+- Create evaluation summary dashboard
+- Final documentation for Arklex handoff
 
 ---
 
@@ -330,17 +334,206 @@ Output JSON with scores and reasoning.
 - Embedding model details
 - Sample ground truth Q&A pairs (for reference)
 
-### 3. LLM Judge Baseline
-- Judge implementation code
-- Baseline test results
-- Evaluation metrics
-- Known limitations documented
+### 3. Evaluation Framework & Comparison
+- **LLM-as-judge implementation** (simple GPT-4 evaluator)
+- **OpenAI Evals implementation** (using openai/evals package)
+- 15 test questions with ground truth
+- Evaluation results from both approaches
+- **Comparison report** analyzing:
+  - Factual accuracy detection
+  - Hallucination detection
+  - Citation validation
+  - Consistency checking
+  - Edge case handling
+  - Cost and latency
+- **Recommendation**: Which evaluator is better for which testing facets
+- Known limitations of both approaches documented
 
 ### 4. Demo Materials
 - Jupyter notebook with example conversations
 - Video recording of agent in action
 - Slide deck explaining the use case
 - Test conversation transcripts
+
+---
+
+## Day 3 Implementation Details
+
+### Evaluation Testing Strategy
+
+#### Test Set Creation
+**15 Curated Questions** across categories:
+1. **Factual Recall** (3 questions): Direct facts from reports
+   - "What is UBS's year-end S&P 500 target for 2025?"
+   - "Which sectors does UBS rate as 'Attractive' in March 2025?"
+2. **Synthesis** (3 questions): Multi-document reasoning
+   - "How has UBS's view on US equities evolved from June 2024 to March 2025?"
+3. **Risk Analysis** (3 questions): Understanding downside scenarios
+   - "What are the top 3 risks to UBS's positive equity outlook?"
+4. **Comparative** (3 questions): Comparing asset classes
+   - "Should I invest more in equities or bonds according to UBS?"
+5. **Edge Cases** (3 questions): Out-of-scope or ambiguous
+   - "What is UBS's view on cryptocurrency?" (not in reports)
+   - "Will the market crash next week?" (forward-looking)
+
+#### Ground Truth Format
+```json
+{
+  "question": "What is UBS's year-end S&P 500 target for 2025?",
+  "ground_truth": "6,400 according to UBS House View March 2025",
+  "source_documents": ["UBS_House_View_March_2025.pdf"],
+  "source_pages": [22],
+  "category": "factual_recall",
+  "expected_behavior": "Agent should cite specific target with source"
+}
+```
+
+### LLM-as-Judge Implementation
+
+**Simple Approach** (baseline for comparison):
+```python
+# Judge evaluates agent response against ground truth
+judge_prompt = """
+You are evaluating a financial research agent's response.
+
+QUESTION: {question}
+AGENT RESPONSE: {agent_response}
+GROUND TRUTH: {ground_truth}
+SOURCE DOCUMENTS: {source_docs}
+
+Score the response on these criteria (1-5 scale):
+1. Factual Accuracy: Does it match ground truth?
+2. Source Attribution: Proper citations with page numbers?
+3. Completeness: Fully answers the question?
+4. Hallucination Detection: Any invented information?
+5. Compliance: Appropriate disclaimers?
+
+Return JSON with scores and reasoning.
+"""
+```
+
+**Limitations to Document**:
+- Judge LLM can hallucinate in evaluation
+- Inconsistent across runs (non-deterministic)
+- No adversarial probing
+- Manual test creation required
+- Can't reliably test multi-turn state
+- Expensive (2 LLM calls per test: agent + judge)
+
+### OpenAI Evals Implementation
+
+**Using openai/evals Package**:
+```yaml
+# eval_config.yaml
+investor_research_eval:
+  id: investor_research.dev.v1
+  metrics: [accuracy, citation_quality, hallucination_rate]
+
+  test_cases:
+    - input: "What is UBS's S&P 500 target?"
+      ideal: "6,400 for December 2025 (UBS House View March 2025, Page 22)"
+
+  grading:
+    - type: match
+      weight: 0.4
+    - type: includes
+      weight: 0.3
+    - type: citation_check
+      weight: 0.3
+```
+
+**Advantages to Measure**:
+- Structured evaluation framework
+- Deterministic where possible
+- Built-in metrics (accuracy, F1, etc.)
+- Batch evaluation support
+- Result tracking over time
+- Can integrate custom graders
+
+### FastAPI REST API
+
+**Endpoints**:
+```python
+# Core agent endpoints
+POST /api/v1/query
+  - Single query to agent
+  - Returns: {response, sources, tool_calls}
+
+POST /api/v1/conversation
+  - Multi-turn conversation
+  - Session management
+  - Returns: {response, conversation_id, history}
+
+# Evaluation endpoints
+POST /api/v1/evaluate/llm-judge
+  - Run LLM-judge evaluation
+  - Body: {test_set, agent_config}
+  - Returns: {scores, detailed_results}
+
+POST /api/v1/evaluate/openai-evals
+  - Run OpenAI Evals evaluation
+  - Body: {eval_config}
+  - Returns: {metrics, comparison}
+
+GET /api/v1/evaluate/compare
+  - Compare both evaluation approaches
+  - Returns: {llm_judge_results, evals_results, recommendation}
+
+# Utility endpoints
+GET /api/v1/health
+GET /api/v1/stats
+  - Vector store stats
+  - Agent performance metrics
+```
+
+### Command-Line Evaluation Runner
+
+**CLI Tool**: `python src/eval/run_evaluation.py`
+
+```bash
+# Run both evaluators
+python src/eval/run_evaluation.py --test-set data/test_questions.json --compare
+
+# Run only LLM-judge
+python src/eval/run_evaluation.py --evaluator llm-judge --output results/llm_judge.json
+
+# Run only OpenAI Evals
+python src/eval/run_evaluation.py --evaluator openai-evals --output results/evals.json
+
+# Generate comparison report
+python src/eval/compare_evaluators.py --llm-judge results/llm_judge.json --evals results/evals.json --output comparison_report.md
+```
+
+### Comparison Analysis Framework
+
+**Evaluation Dimensions**:
+1. **Factual Accuracy Detection**
+   - How well does each catch incorrect facts?
+   - False positive rate, false negative rate
+
+2. **Hallucination Detection**
+   - Can it identify invented information?
+   - Sensitivity to subtle hallucinations
+
+3. **Citation Validation**
+   - Verifies page numbers correct?
+   - Checks source documents exist?
+
+4. **Consistency Checking**
+   - Same question → same score across runs?
+   - Inter-evaluator agreement
+
+5. **Edge Case Handling**
+   - Out-of-scope questions
+   - Ambiguous queries
+   - Multi-turn context loss
+
+6. **Cost & Latency**
+   - $/evaluation
+   - Time per test
+   - Scalability
+
+**Output**: Recommendation matrix showing which evaluator is better for each facet
 
 ---
 
@@ -385,12 +578,13 @@ Output JSON with scores and reasoning.
 - ✅ Gradio web UI as primary interface
 
 ### Implementation Sequence
-1. **Day 1 AM**: Fork FinRobot, setup environment with uv, configure OpenAI
-2. **Day 1 PM**: Download UBS PDFs, parse, chunk, embed, load to ChromaDB
-3. **Day 2 AM**: Extend FinRobot agent with tools and memory
-4. **Day 2 PM**: Build compliance rules, integrate RAG + tools
-5. **Day 2 Eve**: Build Gradio UI and test flows
-6. **Day 3 AM**: Create LLM judge + 15 test questions
-7. **Day 3 PM**: Build API, documentation, handover package
+1. **Day 1 AM**: ✅ Setup environment with uv, configure OpenAI, ChromaDB
+2. **Day 1 PM**: ✅ Download UBS PDFs, parse, chunk, embed, load to ChromaDB
+3. **Day 2 AM**: ✅ Build research agent with OpenAI function calling
+4. **Day 2 PM**: ✅ Integrate RAG tool, build compliance, create Gradio UI
+5. **Day 2 Eve**: ✅ CLI interface, automated tests (test_day2.sh)
+6. **Day 3 AM**: Create 15 test questions + LLM-judge + OpenAI Evals
+7. **Day 3 PM**: Build FastAPI REST API + CLI evaluation runner
+8. **Day 3 Eve**: Compare evaluators, generate recommendation report
 
-**Status**: Ready to kick off implementation on your signal, JC.
+**Status**: Day 1 & Day 2 complete. Ready for Day 3 implementation.
